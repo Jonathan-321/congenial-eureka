@@ -1,4 +1,5 @@
 from django.db import models
+from authentication.models import User
 from farmers.models import Farmer
 from django.core.validators import MinValueValidator
 from decimal import Decimal
@@ -22,15 +23,22 @@ class LoanProduct(models.Model):
         decimal_places=2,
         help_text="Annual interest rate as a percentage"
     )
-    term_days = models.IntegerField(
+    duration_days = models.IntegerField(
         help_text="Loan duration in days"
     )
     is_active = models.BooleanField(default=True)
+    requirements = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name']
 
     def __str__(self):
         return f"{self.name} ({self.interest_rate}% APR)"
 
 class Loan(models.Model):
+    """Represents a loan issued to a farmer."""
+
     LOAN_STATUS_CHOICES = [
         ('PENDING', 'Pending Approval'),
         ('APPROVED', 'Approved'),
@@ -49,6 +57,7 @@ class Loan(models.Model):
         ('FAILED', 'Failed'),
     ]
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     farmer = models.ForeignKey(
         Farmer, 
         on_delete=models.PROTECT,
@@ -131,19 +140,35 @@ class Transaction(models.Model):
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    loan = models.ForeignKey('loans.Loan', on_delete=models.CASCADE, related_name='transactions')
-    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
+    loan = models.ForeignKey(
+        'loans.Loan', 
+        on_delete=models.CASCADE, 
+        related_name='transactions'
+    )
+    transaction_type = models.CharField(
+        max_length=20, 
+        choices=TRANSACTION_TYPES,
+        db_index=True  # Add index for faster queries
+    )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=3, default='EUR')
     reference = models.CharField(max_length=100, unique=True)
     phone_number = models.CharField(max_length=15)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    status = models.CharField(
+        max_length=20, 
+        choices=STATUS_CHOICES, 
+        default='PENDING',
+        db_index=True  # Add index for faster queries
+    )
     financial_id = models.CharField(max_length=100, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['transaction_type', 'status'])
+        ]
     
     def __str__(self):
         return f"{self.transaction_type} - {self.amount} {self.currency} - {self.status}"

@@ -1,6 +1,6 @@
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from ..farmers.models import Loan, LoanProduct
+from .models import Loan, LoanProduct
 from farmers.models import Farmer
 import json
 

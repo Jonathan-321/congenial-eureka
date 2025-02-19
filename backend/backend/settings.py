@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 from dotenv import load_dotenv 
 import os
+from datetime import timedelta
 
 
 load_dotenv()
@@ -25,43 +26,98 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-)fpad@_xpzoj3(^-#^)!)52(&2_pscf390gco7%5_-9)jobtn0'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = True  # Temporarily enable debug
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    # Local apps first
+    'authentication', 
+    'farmers',
+    'loans',
+    
+    # Django apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'farmers',
-    'loans',
-    'credit_scoring',
+    
+    # Third party apps
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'corsheaders',
+
 ]
 
-# Africa's Talking Settings
-AT_USERNAME = os.getenv('AT_USERNAME')
+# CORS settings
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+# Loan Settings
+MINIMUM_CREDIT_SCORE = 50
+MAXIMUM_EXPOSURE = 1000000  # Maximum loan amount in RWF
+
+# Africa's Talking API Settings
+AT_USERNAME = os.getenv('AT_USERNAME', 'sandbox')
 AT_API_KEY = os.getenv('AT_API_KEY')
 
-# MTN MoMo Settings
+# MTN MOMO API Settings
+MOMO_API_URL = os.getenv('MOMO_API_URL', 'https://sandbox.momodeveloper.mtn.com')
 MOMO_SUBSCRIPTION_KEY = os.getenv('MOMO_SUBSCRIPTION_KEY')
-MOMO_COLLECTION_KEY=os.getenv('MOMO_COLLECTION_KEY')
-MOMO_API_USER=os.getenv('MOMO_API_USER')
+MOMO_COLLECTION_KEY = os.getenv('MOMO_COLLECTION_KEY')
+MOMO_API_USER = os.getenv('MOMO_API_USER')
 MOMO_API_KEY = os.getenv('MOMO_API_KEY')
 MOMO_API_SECRET = os.getenv('MOMO_API_SECRET')
 MOMO_ENVIRONMENT = os.getenv('MOMO_ENVIRONMENT', 'sandbox')
-MOMO_API_URL = os.getenv('MOMO_API_URL') 
 
+# Custom user model
+AUTH_USER_MODEL = 'authentication.User'
 
+# REST Framework settings
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+    'ASYNC_OPERATIONS': True,
+    'DEFAULT_ASYNC_TIMEOUT': 30,
+}
+
+# JWT settings
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': False,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+# CORS settings
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -70,6 +126,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'backend.urls'
 
@@ -95,13 +154,20 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+
+# Add Database configuration for transaction support
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            'timeout': 20,
+        },
+        'CONN_MAX_AGE': 0,  # Close connections at the end of each request
+        'ATOMIC_REQUESTS': True,
+        'AUTOCOMMIT': True,
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -143,3 +209,39 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Update LOGGING configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
+            'level': 'DEBUG',  # Changed from ERROR to DEBUG for more detailed logging
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'debug.log',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',  # Changed from ERROR to DEBUG
+            'propagate': True,
+        },
+        'loans': {  # Add specific logger for loans app
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}

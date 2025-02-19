@@ -1,10 +1,13 @@
 from decimal import Decimal
 from datetime import datetime, timedelta
-from django.db import models
+from django.db import models, transaction
 from django.conf import settings
+from django.utils import timezone
 import httpx
-from .models import Loan, LoanProduct, LoanRepayment
-from momo_integration import MoMoAPI
+import uuid
+from .models import Loan, LoanProduct, LoanRepayment, Transaction
+from .momo_integration import MoMoAPI
+from .sms_service import SMSService  # Now this import will work
 
 class SMSService:
     @staticmethod
@@ -70,6 +73,80 @@ class AfricasTalkingService:
 
 
 class LoanService:
+    def __init__(self):
+        self.momo_api = MoMoAPI()
+        self.sms_service = SMSService()
+
+    async def apply_for_loan(self, farmer, loan_product_id: uuid.UUID, amount: Decimal) -> dict:
+        try:
+            async with transaction.atomic():
+                product = await LoanProduct.objects.aget(id=loan_product_id)
+                eligibility = await self._check_eligibility(farmer, product, amount)
+                
+                if not eligibility['eligible']:
+                    return {'status': 'REJECTED', 'message': eligibility['reason']}
+
+                loan = await Loan.objects.acreate(
+                    farmer=farmer,
+                    loan_product=product,
+                    amount_requested=amount,
+                    status='PENDING'
+                )
+
+                # Send SMS notification
+                await self.sms_service.send_sms(
+                    farmer.phone_number,
+                    f"Your loan application for {amount} RWF is being processed."
+                )
+
+                return {'status': 'PENDING', 'loan_id': loan.id}
+
+        except Exception as e:
+            return {'status': 'ERROR', 'message': str(e)}
+
+    async def record_repayment(self, loan_id: uuid.UUID, amount: Decimal, momo_reference: str) -> dict:
+        try:
+            async with transaction.atomic():
+                loan = await Loan.objects.aget(id=loan_id)
+                
+                # Create repayment record
+                await LoanRepayment.objects.acreate(
+                    loan=loan,
+                    amount=amount,
+                    transaction_reference=momo_reference
+                )
+
+                # Update loan status
+                total_repaid = await self.get_loan_balance(loan)
+                
+                if total_repaid >= loan.amount_approved:
+                    loan.status = 'PAID'
+                elif loan.due_date < timezone.now():
+                    loan.status = 'OVERDUE'
+                else:
+                    loan.status = 'ACTIVE'
+                
+                await loan.asave()
+
+                # Send SMS confirmation
+                await self.sms_service.send_sms(
+                    loan.farmer.phone_number,
+                    f"Payment of {amount} RWF received. Remaining balance: {loan.amount_approved - total_repaid} RWF"
+                )
+
+                return {'status': 'SUCCESS', 'message': 'Repayment processed'}
+
+        except Exception as e:
+            return {'status': 'ERROR', 'message': str(e)}
+
+    @staticmethod
+    async def get_loan_balance(loan) -> Decimal:
+        """Calculate current loan balance"""
+        total_repaid = await LoanRepayment.objects.filter(loan=loan).aggregate(
+            total=models.Sum('amount')
+        )
+        return max(loan.amount_approved - (total_repaid['total'] or 0), 0)
+
     @staticmethod
     def calculate_credit_score(farmer):
         """
@@ -196,6 +273,28 @@ class LoanService:
             loan.disbursement_status = 'FAILED'
             loan.save()
             return False, str(e)
+
+    @staticmethod
+    async def process_application(loan_id: int) -> bool:
+        loan = await Loan.objects.aget(id=loan_id)
+        
+        # Check eligibility
+        if not await LoanService.check_eligibility(loan):
+            return False
+            
+        # Initiate disbursement
+        momo = MoMoAPI()
+        disbursement = await momo.initiate_disbursement(
+            loan_id=loan.id,
+            amount=loan.amount_approved,
+            phone_number=loan.farmer.phone_number
+        )
+        
+        if disbursement['status'] == 'SUCCESSFUL':
+            loan.status = 'DISBURSED'
+            await loan.asave()
+            return True
+        return False
 
 class LoanRepaymentService:
     @staticmethod

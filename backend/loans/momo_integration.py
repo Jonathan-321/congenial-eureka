@@ -46,14 +46,15 @@ class MoMoAPI:
     async def initiate_disbursement(self, loan_id, amount, phone_number):
         """
         Initiate a loan disbursement to farmer's mobile money account
-        Args:
-            loan_id: ID of the loan being disbursed
-            amount: Amount to disburse
-            phone_number: Recipient's phone number
         """
+        # Convert synchronous database operations to async
+        get_loan = sync_to_async(Loan.objects.get)
+        create_transaction = sync_to_async(Transaction.objects.create)
+        save_loan = sync_to_async(lambda x: x.save())
+
         # Get the loan instance
         try:
-            loan = Loan.objects.get(id=loan_id)
+            loan = await get_loan(id=loan_id)
         except Loan.DoesNotExist:
             raise Exception("Loan not found")
 
@@ -61,7 +62,7 @@ class MoMoAPI:
         reference = str(uuid.uuid4())
 
         # Create transaction record
-        transaction = Transaction.objects.create(
+        transaction = await create_transaction(
             loan=loan,
             transaction_type='DISBURSEMENT',
             amount=amount,
@@ -121,7 +122,7 @@ class MoMoAPI:
                     # Update loan status
                     loan.disbursement_status = 'PROCESSING'
                     loan.momo_reference = reference
-                    loan.save()
+                    await save_loan(loan)
                     
                     return {
                         'status': 'pending',
@@ -146,6 +147,13 @@ class MoMoAPI:
         Args:
             reference: Transaction reference ID
         """
+
+        # Convert database operations to async
+        get_transaction = sync_to_async(Transaction.objects.get)
+        save_transaction = sync_to_async(lambda x: x.save())
+        get_loan = sync_to_async(lambda x: x.loan) 
+        save_loan = sync_to_async(lambda x: x.save())
+
         if not self.token:
             await self.get_access_token()
 
@@ -166,17 +174,17 @@ class MoMoAPI:
                 
                 # Update transaction status
                 try:
-                    transaction = Transaction.objects.get(reference=reference)
+                    transaction = await get_transaction(reference=reference)
                     transaction.status = 'SUCCESSFUL' if status_data.get('status') == 'SUCCESSFUL' else 'FAILED'
-                    transaction.save()
+                    await save_transaction(transaction)
                     
                     # Update loan status if transaction is successful
                     if transaction.status == 'SUCCESSFUL':
-                        loan = transaction.loan
+                        loan = await get_loan(transaction)
                         loan.disbursement_status = 'COMPLETED'
                         loan.disbursement_date = timezone.now()
                         loan.status = 'ACTIVE'
-                        loan.save()
+                        await save_loan(loan)
                 except Transaction.DoesNotExist:
                     pass
                 
@@ -192,9 +200,14 @@ class MoMoAPI:
             amount: Amount to collect
             phone_number: Payer's phone number
         """
-         # Get the loan instance
+
+        # Convert all database operations to async
+        get_loan = sync_to_async(Loan.objects.get)
+        create_transaction = sync_to_async(Transaction.objects.create)
+        
+        # Get the loan instance
         try:
-            loan = await sync_to_async(Loan.objects.get)(id=loan_id)
+            loan = await get_loan(id=loan_id)
         except Loan.DoesNotExist:
             raise Exception("Loan not found")
 
@@ -202,7 +215,7 @@ class MoMoAPI:
         reference = str(uuid.uuid4())
 
         # Create transaction record
-        transaction = await sync_to_async(Transaction.objects.create)(
+        transaction = await create_transaction(
             loan=loan,
             transaction_type='REPAYMENT',
             amount=amount,
@@ -211,7 +224,6 @@ class MoMoAPI:
             phone_number=phone_number,
             status='PENDING'
         )
-
         # Get collection token
         await self.get_access_token(is_collection=True)
 

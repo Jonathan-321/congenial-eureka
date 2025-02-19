@@ -14,8 +14,9 @@ from loans.momo_integration import MoMoAPI
 from loans.models import Loan, LoanProduct, Transaction
 from farmers.models import Farmer
 
+
 async def test_collection():
-    print("\nTesting MTN MoMo Collection")
+    print("\nTesting MTN MoMo Collection/Repayment")
     print("--------------------------")
     
     try:
@@ -26,8 +27,16 @@ async def test_collection():
         get_transaction = sync_to_async(Transaction.objects.get)
         get_loan = sync_to_async(Loan.objects.get)
         
-        # 1. Create test data
-        print("\n1. Creating test data...")
+        # Initialize MoMo API first
+        momo = MoMoAPI()
+        
+        # 1. Get access token
+        print("\n1. Getting access token...")
+        token = await momo.get_access_token(is_collection=True)
+        print(f"✅ Token received: {token[:20]}...")
+        
+        # 2. Create test data
+        print("\n2. Creating test data...")
         
         # Create or get test farmer
         farmer, created = await get_or_create_farmer(
@@ -65,17 +74,9 @@ async def test_collection():
         )
         print(f"Created test loan with ID: {loan.id}")
         
-        # Initialize MoMo API
-        momo = MoMoAPI()
-        
-        # 2. Get access token
-        print("\n2. Getting access token...")
-        token = await momo.get_access_token(is_collection=True)
-        print(f"✅ Token received: {token[:20]}...")
-        
         # 3. Request payment
         print("\n3. Requesting payment...")
-        amount = "5.00"  # 5 EUR test payment
+        amount = Decimal("5.00")  # Changed to Decimal
         print(f"Phone: {farmer.phone_number}")
         print(f"Amount: {amount} EUR")
         
@@ -86,26 +87,18 @@ async def test_collection():
         )
         print(f"Payment requested: {result}")
         
-        # 4. Check transaction record
-        transaction = await get_transaction(reference=result['reference'])
-        print(f"\n4. Transaction record created:")
-        print(f"ID: {transaction.id}")
-        print(f"Type: {transaction.transaction_type}")
-        print(f"Status: {transaction.status}")
-        print(f"Reference: {transaction.reference}")
-        
-        # 5. Check payment status
-        if result['status'] == 'pending':
-            print("\n5. Checking payment status...")
+        # 4. Check payment status
+        if result.get('status') == 'pending':
+            print("\n4. Checking payment status...")
             await asyncio.sleep(5)  # Wait 5 seconds before checking
-            status = await momo.check_payment_status(result['reference'])
+            status = await momo.check_payment_status(reference=result['reference'])  # Added reference=
             print(f"Payment status: {status}")
             
-            # Check final transaction status
+            # Get updated transaction
             transaction = await get_transaction(reference=result['reference'])
-            print(f"\nFinal transaction status: {transaction.status}")
+            print(f"\nTransaction status: {transaction.status}")
             
-            # Check loan repayment status
+            # Get updated loan status
             loan = await get_loan(id=loan.id)
             get_total = sync_to_async(loan.repayments.aggregate)
             total_repaid = await get_total(models.Sum('amount'))
@@ -123,6 +116,11 @@ async def test_collection():
             print(f"Status Code: {e.response.status_code}")
             print(f"Headers: {e.response.headers}")
             print(f"Body: {e.response.text}")
+            
+        # Added full traceback
+        import traceback
+        print("\nFull traceback:")
+        traceback.print_exc()
 
 if __name__ == "__main__":
     asyncio.run(test_collection())
