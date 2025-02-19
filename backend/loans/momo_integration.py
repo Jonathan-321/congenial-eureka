@@ -72,6 +72,7 @@ class MoMoAPI:
             status='PENDING'
         )
 
+
         # Get access token if not available
         if not self.token:
             await self.get_access_token()

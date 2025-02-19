@@ -1,0 +1,15 @@
+from datetime import timedelta
+
+LOAN_SETTINGS = {
+    'PAYMENT_CHECK_INTERVAL': 300,  # 5 minutes
+    'MAX_PAYMENT_CHECK_ATTEMPTS': 5,
+    'OVERDUE_GRACE_PERIOD': timedelta(days=3),
+    'DEFAULT_CURRENCY': 'EUR',
+    'SMS_ENABLED': True,
+}
+
+MOMO_SETTINGS = {
+    'DISBURSEMENT_TIMEOUT': 30.0,
+    'COLLECTION_TIMEOUT': 30.0,
+    'STATUS_CHECK_TIMEOUT': 15.0,
+}

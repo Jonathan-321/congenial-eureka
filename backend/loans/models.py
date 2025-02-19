@@ -172,3 +172,25 @@ class Transaction(models.Model):
     
     def __str__(self):
         return f"{self.transaction_type} - {self.amount} {self.currency} - {self.status}"
+
+
+class PaymentSchedule(models.Model):
+    loan = models.ForeignKey(Loan, on_delete=models.CASCADE, related_name='schedules')
+    due_date = models.DateTimeField()
+    principal_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    interest_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('PENDING', 'Pending'),
+            ('PAID', 'Paid'),
+            ('OVERDUE', 'Overdue'),
+        ],
+        default='PENDING'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['due_date']

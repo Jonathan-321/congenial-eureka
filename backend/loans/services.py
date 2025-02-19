@@ -5,7 +5,7 @@ from django.conf import settings
 from django.utils import timezone
 import httpx
 import uuid
-from .models import Loan, LoanProduct, LoanRepayment, Transaction
+from .models import Loan, LoanRepayment, PaymentSchedule, LoanProduct
 from .momo_integration import MoMoAPI
 from .sms_service import SMSService  # Now this import will work
 
@@ -76,6 +76,60 @@ class LoanService:
     def __init__(self):
         self.momo_api = MoMoAPI()
         self.sms_service = SMSService()
+
+    async def create_payment_schedule(self, loan: Loan) -> None:
+        """Create payment schedule for a loan"""
+        amount_per_payment = loan.amount_approved / loan.loan_product.term_months
+        interest_rate = loan.loan_product.interest_rate / 12  # Monthly interest
+        
+        current_date = loan.disbursement_date
+        remaining_balance = loan.amount_approved
+        
+        schedules = []
+        for month in range(loan.loan_product.term_months):
+            interest_amount = remaining_balance * interest_rate
+            total_payment = amount_per_payment + interest_amount
+            
+            due_date = current_date + timedelta(days=30)
+            
+            schedules.append(PaymentSchedule(
+                loan=loan,
+                due_date=due_date,
+                principal_amount=amount_per_payment,
+                interest_amount=interest_amount,
+                total_amount=total_payment,
+                status='PENDING'
+            ))
+            
+            remaining_balance -= amount_per_payment
+            current_date = due_date
+            
+        await PaymentSchedule.objects.abulk_create(schedules)
+
+    async def check_loan_status(self, loan: Loan) -> None:
+        """Check and update loan status based on payments and due dates"""
+        total_paid = await self.get_loan_balance(loan)
+        current_schedule = await PaymentSchedule.objects.filter(
+            loan=loan,
+            due_date__lte=timezone.now(),
+            status='PENDING'
+        ).afirst()
+        
+        if total_paid >= loan.amount_approved:
+            loan.status = 'PAID'
+        elif current_schedule and current_schedule.due_date < timezone.now():
+            loan.status = 'OVERDUE'
+            # Send overdue notification
+            await self.sms_service.send_sms(
+                loan.farmer.phone_number,
+                f"Your loan payment of {current_schedule.total_amount} EUR is overdue. Please make payment to avoid penalties."
+            )
+        else:
+            loan.status = 'ACTIVE'
+            
+        await loan.asave()
+
+
 
     async def apply_for_loan(self, farmer, loan_product_id: uuid.UUID, amount: Decimal) -> dict:
         try:
