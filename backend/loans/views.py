@@ -10,8 +10,44 @@ from .serializers import (
 )
 from .services import LoanService
 from asgiref.sync import async_to_sync
+from .models import PaymentSchedule, Loan
+from .serializers import PaymentScheduleSerializer
+from django.db.models import Sum, Count
+from django.utils import timezone
+from asgiref.sync import sync_to_async
 
-
+class LoanViewSet(viewsets.ModelViewSet):
+    # Add this action to your existing LoanViewSet    
+    @action(detail=False, methods=['get'])
+    async def payment_summary(self, request):
+        """Get payment summary for all loans of a farmer"""
+        farmer_id = request.query_params.get('farmer_id')
+        if not farmer_id:
+            return Response(
+                {"error": "farmer_id parameter is required"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        @sync_to_async
+        def get_payment_stats():
+            loans = Loan.objects.filter(farmer_id=farmer_id)
+            return {
+                'total_loans': loans.count(),
+                'active_loans': loans.filter(status__in=['APPROVED', 'DISBURSED', 'ACTIVE']).count(),
+                'total_approved': loans.aggregate(Sum('amount_approved'))['amount_approved__sum'] or 0,
+                'total_repaid': LoanRepayment.objects.filter(loan__in=loans).aggregate(Sum('amount'))['amount__sum'] or 0,
+                'upcoming_payments': PaymentSchedule.objects.filter(
+                    loan__in=loans,
+                    status__in=['PENDING', 'PARTIALLY_PAID']
+                ).count(),
+                'overdue_payments': PaymentSchedule.objects.filter(
+                    loan__in=loans,
+                    status='OVERDUE'
+                ).count()
+            }
+        
+        payment_stats = await get_payment_stats()
+        return Response(payment_stats)
 class LoanViewSet(viewsets.ModelViewSet):
     """
     API endpoints for loan management
@@ -102,3 +138,52 @@ class LoanProductViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = LoanProduct.objects.all()
     serializer_class = LoanProductSerializer
+
+
+class PaymentScheduleViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = PaymentSchedule.objects.all()
+    serializer_class = PaymentScheduleSerializer
+    
+    @action(detail=False, methods=['get'])
+    async def upcoming(self, request):
+        """Get upcoming payment schedules"""
+        farmer_id = request.query_params.get('farmer_id')
+        if not farmer_id:
+            return Response(
+                {"error": "farmer_id parameter is required"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        @sync_to_async
+        def get_upcoming_schedules():
+            return list(PaymentSchedule.objects.filter(
+                loan__farmer_id=farmer_id,
+                status__in=['PENDING', 'PARTIALLY_PAID'],
+                due_date__gte=timezone.now()
+            ).order_by('due_date'))
+        
+        schedules = await get_upcoming_schedules()
+        serializer = self.get_serializer(schedules, many=True)
+        return Response(serializer.data)
+        
+    @action(detail=False, methods=['get'])
+    async def overdue(self, request):
+        """Get overdue payment schedules"""
+        farmer_id = request.query_params.get('farmer_id')
+        if not farmer_id:
+            return Response(
+                {"error": "farmer_id parameter is required"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        @sync_to_async
+        def get_overdue_schedules():
+            return list(PaymentSchedule.objects.filter(
+                loan__farmer_id=farmer_id,
+                status__in=['OVERDUE', 'PARTIALLY_PAID'],
+                due_date__lt=timezone.now()
+            ).order_by('due_date'))
+        
+        schedules = await get_overdue_schedules()
+        serializer = self.get_serializer(schedules, many=True)
+        return Response(serializer.data)

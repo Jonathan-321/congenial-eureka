@@ -7,7 +7,8 @@ import httpx
 import uuid
 from .models import Loan, LoanRepayment, PaymentSchedule, LoanProduct
 from .momo_integration import MoMoAPI
-from .sms_service import SMSService  # Now this import will work
+from .sms_service import SMSService 
+from asgiref.sync import sync_to_async
 
 class SMSService:
     @staticmethod
@@ -72,6 +73,117 @@ class AfricasTalkingService:
             return response.json()
 
 
+class PaymentScheduleService:
+    def __init__(self):
+        self.sms_service = SMSService()
+
+    async def check_overdue_payments(self):
+        """Check for overdue payments and update status"""
+        current_date = timezone.now()
+        
+        @sync_to_async
+        def get_overdue_schedules():
+            return list(PaymentSchedule.objects.filter(
+                status='PENDING',
+                due_date__lt=current_date
+            ).select_related('loan__farmer'))
+        
+        overdue_schedules = await get_overdue_schedules()
+        
+        for schedule in overdue_schedules:
+            days_overdue = (current_date - schedule.due_date).days
+            if days_overdue > 0:
+                # Update status to overdue
+                schedule.status = 'OVERDUE'
+                # Calculate penalty (1% per day overdue, max 30%)
+                daily_rate = Decimal('0.01')  # 1% per day
+                penalty = schedule.amount * min(daily_rate * days_overdue, Decimal('0.3'))
+                schedule.penalty_amount = penalty
+                await schedule.asave()
+                
+                # Send reminder if none sent in last 24 hours
+                if (not schedule.last_reminder_sent or 
+                    current_date - schedule.last_reminder_sent > timedelta(days=1)):
+                    await self.sms_service.send_sms(
+                        schedule.loan.farmer.phone_number,
+                        f"REMINDER: Your loan payment of {schedule.amount} is {days_overdue} days overdue. " +
+                        f"Current amount due with penalty: {schedule.amount + penalty}. " +
+                        "Please make payment to avoid additional penalties."
+                    )
+                    schedule.last_reminder_sent = current_date
+                    await schedule.asave()
+
+    async def send_upcoming_reminders(self):
+        """Send reminders for upcoming payments"""
+        current_date = timezone.now()
+        reminder_days = [7, 3, 1]  # Remind 7 days, 3 days, and 1 day before due date
+        
+        for days in reminder_days:
+            target_date = current_date + timedelta(days=days)
+            upcoming_schedules = await PaymentSchedule.objects.filter(
+                status='PENDING',
+                due_date__date=target_date.date()
+            ).select_related('loan__farmer').all()
+            
+            for schedule in upcoming_schedules:
+                await self.sms_service.send_sms(
+                    schedule.loan.farmer.phone_number,
+                    f"REMINDER: Your loan payment of {schedule.amount} is due in {days} " +
+                    f"{'day' if days == 1 else 'days'}. " +
+                    "Please ensure funds are available in your mobile money account."
+                )
+
+    async def apply_payment(self, loan: Loan, amount: Decimal) -> dict:
+        """Apply payment to pending schedules"""
+        remaining_amount = amount
+        applied_to = []
+        
+        # Wrap the queryset operation with sync_to_async
+        @sync_to_async
+        def get_pending_schedules():
+            return list(PaymentSchedule.objects.filter(
+                loan=loan,
+                status__in=['PENDING', 'OVERDUE', 'PARTIALLY_PAID']
+            ).order_by('due_date'))
+        
+        # Get the schedules asynchronously
+        schedules = await get_pending_schedules()
+        
+        for schedule in schedules:
+            if remaining_amount <= 0:
+                break
+                
+            # Calculate total due (including any penalties)
+            total_due = schedule.amount + schedule.penalty_amount - schedule.amount_paid
+            
+            if remaining_amount >= total_due:
+                # Full payment
+                schedule.amount_paid += total_due
+                schedule.status = 'PAID'
+                remaining_amount -= total_due
+                applied_to.append({
+                    'installment': schedule.installment_number,
+                    'amount': total_due,
+                    'status': 'PAID'
+                })
+            else:
+                # Partial payment
+                schedule.amount_paid += remaining_amount
+                schedule.status = 'PARTIALLY_PAID'
+                applied_to.append({
+                    'installment': schedule.installment_number,
+                    'amount': remaining_amount,
+                    'status': 'PARTIALLY_PAID'
+                })
+                remaining_amount = 0
+                
+            await schedule.asave()
+            
+        return {
+            'applied_to': applied_to,
+            'remaining': remaining_amount
+        }
+
 class LoanService:
     def __init__(self):
         self.momo_api = MoMoAPI()
@@ -79,32 +191,43 @@ class LoanService:
 
     async def create_payment_schedule(self, loan: Loan) -> None:
         """Create payment schedule for a loan"""
-        amount_per_payment = loan.amount_approved / loan.loan_product.term_months
-        interest_rate = loan.loan_product.interest_rate / 12  # Monthly interest
+        # Calculate number of months based on duration_days
+        num_months = loan.loan_product.duration_days // 30
         
-        current_date = loan.disbursement_date
+        amount_per_payment = loan.amount_approved / num_months
+        interest_rate = loan.loan_product.interest_rate / 100 / 12  # Monthly interest
+        
+        current_date = loan.disbursement_date or timezone.now()
         remaining_balance = loan.amount_approved
         
         schedules = []
-        for month in range(loan.loan_product.term_months):
+        for month in range(1, num_months + 1):
             interest_amount = remaining_balance * interest_rate
-            total_payment = amount_per_payment + interest_amount
+            principal_amount = amount_per_payment
+            total_amount = principal_amount + interest_amount
             
             due_date = current_date + timedelta(days=30)
             
             schedules.append(PaymentSchedule(
                 loan=loan,
+                installment_number=month,
                 due_date=due_date,
-                principal_amount=amount_per_payment,
+                principal_amount=principal_amount,
                 interest_amount=interest_amount,
-                total_amount=total_payment,
+                amount=total_amount,
                 status='PENDING'
             ))
             
-            remaining_balance -= amount_per_payment
+            remaining_balance -= principal_amount
             current_date = due_date
-            
-        await PaymentSchedule.objects.abulk_create(schedules)
+
+        # Wrap the bulk_create in a transaction and properly handle async/sync
+        @sync_to_async
+        def create_schedules_sync():
+            with transaction.atomic():
+                PaymentSchedule.objects.bulk_create(schedules)
+                
+        await create_schedules_sync()
 
     async def check_loan_status(self, loan: Loan) -> None:
         """Check and update loan status based on payments and due dates"""
@@ -158,6 +281,7 @@ class LoanService:
         except Exception as e:
             return {'status': 'ERROR', 'message': str(e)}
 
+    # Add to LoanService class
     async def record_repayment(self, loan_id: uuid.UUID, amount: Decimal, momo_reference: str) -> dict:
         try:
             async with transaction.atomic():
@@ -170,25 +294,33 @@ class LoanService:
                     transaction_reference=momo_reference
                 )
 
+                # Apply payment to specific installments
+                payment_service = PaymentScheduleService()
+                payment_allocation = await payment_service.apply_payment(loan, amount)
+                
                 # Update loan status
                 total_repaid = await self.get_loan_balance(loan)
                 
                 if total_repaid >= loan.amount_approved:
                     loan.status = 'PAID'
-                elif loan.due_date < timezone.now():
-                    loan.status = 'OVERDUE'
+                    # Send completion SMS
+                    await self.sms_service.send_sms(
+                        loan.farmer.phone_number,
+                        f"Congratulations! Your loan of {loan.amount_approved} has been fully repaid."
+                    )
                 else:
-                    loan.status = 'ACTIVE'
+                    await self.check_loan_status(loan)
+                    # Send confirmation SMS
+                    await self.sms_service.send_sms(
+                        loan.farmer.phone_number,
+                        f"Payment of {amount} received. Thank you!"
+                    )
                 
-                await loan.asave()
-
-                # Send SMS confirmation
-                await self.sms_service.send_sms(
-                    loan.farmer.phone_number,
-                    f"Payment of {amount} RWF received. Remaining balance: {loan.amount_approved - total_repaid} RWF"
-                )
-
-                return {'status': 'SUCCESS', 'message': 'Repayment processed'}
+                return {
+                    'status': 'SUCCESS',
+                    'payment_allocation': payment_allocation,
+                    'loan_status': loan.status
+                }
 
         except Exception as e:
             return {'status': 'ERROR', 'message': str(e)}
@@ -400,3 +532,5 @@ class LoanRepaymentService:
         )['total'] or 0
         
         return max(loan.amount_approved - total_repaid, 0)
+
+

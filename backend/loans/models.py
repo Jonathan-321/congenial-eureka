@@ -174,21 +174,27 @@ class Transaction(models.Model):
         return f"{self.transaction_type} - {self.amount} {self.currency} - {self.status}"
 
 
+
 class PaymentSchedule(models.Model):
-    loan = models.ForeignKey(Loan, on_delete=models.CASCADE, related_name='schedules')
+    loan = models.ForeignKey('Loan', on_delete=models.CASCADE, related_name='payment_schedule')
+    installment_number = models.IntegerField()
     due_date = models.DateTimeField()
     principal_amount = models.DecimalField(max_digits=10, decimal_places=2)
     interest_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(
         max_length=20,
         choices=[
             ('PENDING', 'Pending'),
             ('PAID', 'Paid'),
             ('OVERDUE', 'Overdue'),
+            ('PARTIALLY_PAID', 'Partially Paid')
         ],
         default='PENDING'
     )
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    penalty_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    last_reminder_sent = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

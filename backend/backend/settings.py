@@ -14,6 +14,7 @@ from pathlib import Path
 from dotenv import load_dotenv 
 import os
 from datetime import timedelta
+from celery.schedules import crontab
 
 
 load_dotenv()
@@ -38,7 +39,12 @@ AUTORELOAD_ENABLED = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
-
+CELERY_BEAT_SCHEDULE = {
+    'monitor-payment-schedules': {
+        'task': 'loans.tasks.monitor_payment_schedules',
+        'schedule': crontab(hour=0, minute=0),  # Run daily at midnight
+    },
+}
 # Application definition
 
 INSTALLED_APPS = [

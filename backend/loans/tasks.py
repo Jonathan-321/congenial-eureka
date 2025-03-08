@@ -11,6 +11,11 @@ async def monitor_payment_status(transaction_reference: str, max_attempts: int =
     Monitor payment status for a given transaction
     """
     from .momo_integration import MoMoAPI
+    from .services import PaymentScheduleService
+
+    payment_service = PaymentScheduleService()
+    await payment_service.check_overdue_payments()
+    await payment_service.send_upcoming_reminders()
 
     momo = MoMoAPI()
     loan_service = LoanService()
