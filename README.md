@@ -163,5 +163,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 📞 Contact
 
-For questions or support, please contact [your-email@example.com](mailto:your-email@example.com)
+For questions or support, please contact muhirejonathan123@gmail.com (mailto:muhirejonathan123@gmail.com)
 ```
