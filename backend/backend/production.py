@@ -23,8 +23,9 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.onrender.com']
 
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
-    "https://yourappdomain.onrender.com",
+    "https://agrifinance-api.onrender.com",
     "http://localhost:3000",
+
 ]
 CORS_ALLOW_CREDENTIALS = True
 
