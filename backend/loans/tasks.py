@@ -4,6 +4,8 @@ from .models import Transaction, Loan
 from .services import LoanService
 from django.conf import settings
 import asyncio
+from .services import PaymentScheduleService
+
 
 @celery_app.task
 async def monitor_payment_status(transaction_reference: str, max_attempts: int = 5):
@@ -48,3 +50,22 @@ async def monitor_payment_status(transaction_reference: str, max_attempts: int =
             return False
             
     return False
+
+
+# Modify the task in loans/tasks.py
+
+@celery_app.task
+async def check_schedules_and_send_reminders():
+    """Check payment schedules and send reminders"""
+    payment_service = PaymentScheduleService()
+    
+    # Check for overdue payments
+    await payment_service.check_overdue_payments()
+    
+    # Send regular reminders
+    await payment_service.send_upcoming_reminders()
+    
+    # Send harvest-based reminders
+    await payment_service.send_harvest_based_reminders()
+    
+    return True

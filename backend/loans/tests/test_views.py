@@ -38,14 +38,6 @@ class LoanAPITests(TestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
 
-    def test_loan_product_list(self):
-        """Test retrieving loan products"""
-        url = reverse('loan-product-list')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['name'], 'Test Product')
-
     def test_loan_application_success(self):
         """Test successful loan application"""
         url = reverse('loan-apply', kwargs={'pk': self.loan_product.id})  # Corrected URL

@@ -15,40 +15,39 @@ from dotenv import load_dotenv
 import os
 from datetime import timedelta
 from celery.schedules import crontab
+import sys
 
-
+# Load environment variables from .env file
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Improved test detection logic
+TESTING = any([
+    'test' in sys.argv,
+    os.environ.get('DJANGO_TESTING') == 'True',
+    os.environ.get('TEST_MODE') == 'True',
+    'pytest' in sys.modules
+])
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
+if TESTING:
+    print("*** TESTING MODE ENABLED ***")
+    # Set test-specific settings
+    AT_API_KEY = 'test_key'
+    AT_USERNAME = 'test_username'
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True  # Temporarily enable debug
-# Add after DEBUG = True
-DEBUG_PROPAGATE_EXCEPTIONS = True
-AUTORELOAD_ENABLED = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
+# In production, these should be more restrictive
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
-
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
-
-CELERY_BEAT_SCHEDULE = {
-    'monitor-payment-schedules': {
-        'task': 'loans.tasks.monitor_payment_schedules',
-        'schedule': crontab(hour=0, minute=0),  # Run daily at midnight
-    },
-}
 # Application definition
-
 INSTALLED_APPS = [
-    # Django apps first
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -56,102 +55,29 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
-    # Third party apps
+    # Third-party apps
     'rest_framework',
     'rest_framework_simplejwt',
-    'corsheaders',
+    'corsheaders',            # Add CORS support
+    'drf_spectacular',        # API documentation
+    'django_filters',
     
-    # Local apps last
+    # Local apps
     'authentication',
     'farmers',
     'loans',
 ]
 
-# Celery Settings
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'UTC'
-CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-
-# Add this to ensure async tasks work properly
-CELERY_TASK_TRACK_STARTED = True
-CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
-
-# CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
-
-CORS_ALLOW_CREDENTIALS = True
-
-# Loan Settings
-MINIMUM_CREDIT_SCORE = 50
-MAXIMUM_EXPOSURE = 1000000  # Maximum loan amount in RWF
-
-# Africa's Talking API Settings
-AT_USERNAME = os.getenv('AT_USERNAME', 'sandbox')
-AT_API_KEY = os.getenv('AT_API_KEY')
-
-# MTN MOMO API Settings
-MOMO_API_URL = os.getenv('MOMO_API_URL', 'https://sandbox.momodeveloper.mtn.com')
-MOMO_SUBSCRIPTION_KEY = os.getenv('MOMO_SUBSCRIPTION_KEY')
-MOMO_COLLECTION_KEY = os.getenv('MOMO_COLLECTION_KEY')
-MOMO_API_USER = os.getenv('MOMO_API_USER')
-MOMO_API_KEY = os.getenv('MOMO_API_KEY')
-MOMO_API_SECRET = os.getenv('MOMO_API_SECRET')
-MOMO_ENVIRONMENT = os.getenv('MOMO_ENVIRONMENT', 'sandbox')
-
-# Custom user model
-AUTH_USER_MODEL = 'authentication.User'
-
-# REST Framework settings
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-    ],
-    'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',
-    ],
-    'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
-    'ASYNC_OPERATIONS': True,
-    'DEFAULT_ASYNC_TIMEOUT': 30,
-}
-
-# JWT settings
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': False,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'UPDATE_LAST_LOGIN': False,
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-    'VERIFYING_KEY': None,
-    'AUTH_HEADER_TYPES': ('Bearer',),
-}
-# CORS settings
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Add this near the top
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'backend.urls'
 
@@ -172,29 +98,122 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'backend.wsgi.application'
+ASGI_APPLICATION = 'backend.asgi.application'
 
+# CORS settings - important for frontend integration
+CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only allow all origins in development
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000').split(',')
 
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+# REST Framework settings
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '20/minute',  # Limit anonymous users
+        'user': '60/minute'   # Limit authenticated users
+    }
+}
 
+# JWT settings
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': False,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': os.getenv('JWT_SECRET_KEY', SECRET_KEY),
+    'VERIFYING_KEY': None,
+    'AUDIENCE': None,
+    'ISSUER': None,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+}
 
-# Add Database configuration for transaction support
+# API Documentation settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'AgriFinance API',
+    'DESCRIPTION': 'API for agricultural finance management and loan processing',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'TAGS': [
+        {'name': 'authentication', 'description': 'User authentication endpoints'},
+        {'name': 'farmers', 'description': 'Farmer management endpoints'},
+        {'name': 'loans', 'description': 'Loan application and management endpoints'},
+        {'name': 'payments', 'description': 'Payment processing endpoints'},
+    ],
+}
+
+# Celery settings
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+
+CELERY_BEAT_SCHEDULE = {
+    'monitor-payment-schedules': {
+        'task': 'loans.tasks.monitor_payment_schedules',
+        'schedule': crontab(hour=0, minute=0),  # Run daily at midnight
+    },
+}
+
+# Database settings
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
-        'OPTIONS': {
-            'timeout': 20,
-        },
-        'CONN_MAX_AGE': 0,  # Close connections at the end of each request
-        'ATOMIC_REQUESTS': True,
-        'AUTOCOMMIT': True,
     }
 }
 
-# Password validation
-# https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
+# For production, use PostgreSQL
+if not DEBUG and not TESTING:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', 'agrifinance'),
+            'USER': os.getenv('DB_USER', 'postgres'),
+            'PASSWORD': os.getenv('DB_PASSWORD', ''),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+        }
+    }
 
+# User model
+AUTH_USER_MODEL = 'authentication.User'
+
+# Africa's Talking API settings
+AT_API_KEY = os.getenv('AT_API_KEY', 'sandbox_api_key')
+AT_USERNAME = os.getenv('AT_USERNAME', 'sandbox_username')
+
+# MTN MoMo API settings
+MOMO_API_KEY = os.getenv('MOMO_API_KEY', '')
+MOMO_API_USER_ID = os.getenv('MOMO_API_USER_ID', '')
+MOMO_API_SECRET = os.getenv('MOMO_API_SECRET', '')
+MOMO_ENVIRONMENT = os.getenv('MOMO_ENVIRONMENT', 'sandbox')
+MOMO_COLLECTION_PRIMARY_KEY = os.getenv('MOMO_COLLECTION_PRIMARY_KEY', '')
+MOMO_DISBURSEMENT_PRIMARY_KEY = os.getenv('MOMO_DISBURSEMENT_PRIMARY_KEY', '')
+
+# Market API settings 
+MARKET_API_KEY = os.getenv('MARKET_API_KEY', '')
+
+# Weather API settings
+WEATHER_API_KEY = os.getenv('WEATHER_API_KEY', '')
+
+# Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -210,61 +229,37 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
-# https://docs.djangoproject.com/en/5.1/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Update LOGGING configuration
+# Logging configuration
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
-        },
-    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
         },
-        'file': {
-            'level': 'DEBUG',  # Changed from ERROR to DEBUG for more detailed logging
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'debug.log',
-            'formatter': 'verbose',
-        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',  # Changed from ERROR to DEBUG
-            'propagate': True,
-        },
-        'loans': {  # Add specific logger for loans app
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': True,
+            'handlers': ['console'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+            'propagate': False,
         },
     },
 }

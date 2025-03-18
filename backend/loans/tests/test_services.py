@@ -4,33 +4,50 @@ from loans.services import LoanService, SMSService
 from farmers.models import Farmer
 from loans.models import Loan, LoanProduct
 import pytest
+from authentication.models import User
+from decimal import Decimal
+import os
 
 class TestLoanServices(TestCase):
     def setUp(self):
-        # Create test farmer
+        # Ensure test environment variables are set
+        os.environ['DJANGO_TESTING'] = 'True'
+        os.environ['TEST_MODE'] = 'True'
+
+        # First create a user
+        self.user = User.objects.create(
+            username="test_services_user",
+            email="services_test@example.com",
+            password="password123",
+            role="FARMER",
+            phone_number="+250789123456"
+        )
+        
+        # Create test farmer with user reference
         self.farmer = Farmer.objects.create(
+            user=self.user,  # Add this line
             name="Test Farmer",
-            phone_number="+250789123456",  # Use a sandbox number
+            phone_number="+250789123456",
             location="Kigali",
             farm_size=2.5
         )
-        
-        # Create test loan product
+        # Create a test loan product
         self.loan_product = LoanProduct.objects.create(
             name="Test Product",
-            min_amount=10000,
-            max_amount=50000,
-            interest_rate=15,
-            term_days=30
+            description="Test description",
+            min_amount=Decimal("100.00"),
+            max_amount=Decimal("1000.00"),
+            interest_rate=Decimal("5.00"),
+            duration_days=30,
+            repayment_schedule_type="FIXED"
         )
-
     @pytest.mark.asyncio
     async def test_loan_application_flow(self):
         # Test loan application
         success, result = await LoanService.process_loan_application(
             self.farmer,
             self.loan_product,
-            20000
+            500
         )
         
         self.assertTrue(success)
