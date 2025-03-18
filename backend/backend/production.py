@@ -29,6 +29,27 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CORS_ALLOW_CREDENTIALS = True
 
+
+# Check required environment variables
+REQUIRED_ENV_VARS = [
+    'SECRET_KEY', 
+    'AT_USERNAME', 
+    'AT_API_KEY',
+    'MOMO_SUBSCRIPTION_KEY',
+    'MOMO_COLLECTION_KEY',
+    'MOMO_API_USER',
+    'MOMO_API_KEY',
+    'MOMO_API_SECRET',
+    'MOMO_ENVIRONMENT',
+    'MOMO_API_URL'
+]
+
+# Generate a warning for missing environment variables
+for var in REQUIRED_ENV_VARS:
+    if not os.environ.get(var):
+        print(f"Warning: {var} environment variable is not set!")
+
+
 # Security settings
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SESSION_COOKIE_SECURE = True

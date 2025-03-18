@@ -2,7 +2,13 @@
 # exit on error
 set -o errexit
 
+# Upgrade pip
+pip install --upgrade pip
+
+# Install requirements
 pip install -r requirements.txt
 
-python backend/manage.py collectstatic --no-input
-python backend/manage.py migrate
+# Run Django commands
+cd backend
+python manage.py collectstatic --no-input
+python manage.py migrate
