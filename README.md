@@ -3,7 +3,9 @@
 
 ## Overview
 
-AgriFinance is a comprehensive digital lending platform designed for agricultural communities in Africa. It bridges the financial gap faced by smallholder farmers by providing accessible loans, incorporating climate data, and enabling mobile money transactions.
+AgriFinance is a comprehensive digital lending platform designed for agricultural communities in Africa.
+It bridges the financial gap faced by smallholder farmers by providing accessible loans,
+incorporating climate data, and enabling mobile money transactions.
 
 ## 🌱 Key Features
 
@@ -119,7 +121,8 @@ For testing payments and SMS functionality, use the following test accounts:
 
 ## 📱 Mobile App Integration
 
-The AgriFinance backend is designed to power both web and mobile applications. Mobile apps can communicate with all API endpoints, with special consideration for:
+The AgriFinance backend is designed to power both web and mobile applications.
+Mobile apps can communicate with all API endpoints, with special consideration for:
 - Token-based authentication
 - Offline data synchronization
 - Low-bandwidth optimized endpoints
