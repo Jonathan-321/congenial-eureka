@@ -2,8 +2,7 @@ import os
 import dj_database_url
 from .settings import *
 
-DEBUG = 'RENDER' in os.environ
-
+DEBUG = 'RENDER' not in os.environ
 # Configure DATABASE_URL from Render
 if 'DATABASE_URL' in os.environ:
     DATABASES['default'] = dj_database_url.config(
