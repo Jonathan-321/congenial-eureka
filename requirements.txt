@@ -1,81 +1,93 @@
-# packages in environment at /usr/local/Caskroom/miniforge/base/envs/agrifinance:
-#
-# Name                    Version                   Build  Channel
-anyio                     4.8.0              pyhd8ed1ab_0    conda-forge
-asgiref                   3.8.1              pyhd8ed1ab_1    conda-forge
-astroid                   3.3.8           py312hb401068_0    conda-forge
-brotli-python             1.1.0           py312h5861a67_2    conda-forge
-bzip2                     1.0.8                hfdf4475_7    conda-forge
-ca-certificates           2025.1.31            h8857fd0_0    conda-forge
-certifi                   2024.12.14         pyhd8ed1ab_0    conda-forge
-cffi                      1.17.1          py312hf857d28_0    conda-forge
-charset-normalizer        3.4.1              pyhd8ed1ab_0    conda-forge
-colorama                  0.4.6              pyhd8ed1ab_1    conda-forge
-dill                      0.3.9              pyhd8ed1ab_1    conda-forge
-django                    5.1.6              pyhd8ed1ab_0    conda-forge
-django-stubs              5.1.2              pyhd8ed1ab_0    conda-forge
-django-stubs-ext          5.1.2              pyhd8ed1ab_0    conda-forge
-djangorestframework       3.15.2             pyhd8ed1ab_1    conda-forge
-exceptiongroup            1.2.2              pyhd8ed1ab_1    conda-forge
-h11                       0.14.0             pyhd8ed1ab_1    conda-forge
-h2                        4.2.0              pyhd8ed1ab_0    conda-forge
-hpack                     4.1.0              pyhd8ed1ab_0    conda-forge
-httpcore                  1.0.7              pyh29332c3_1    conda-forge
-httpx                     0.28.1             pyhd8ed1ab_0    conda-forge
-hyperframe                6.1.0              pyhd8ed1ab_0    conda-forge
-idna                      3.10               pyhd8ed1ab_1    conda-forge
-iniconfig                 2.0.0              pyhd8ed1ab_1    conda-forge
-isort                     6.0.0              pyhd8ed1ab_0    conda-forge
-joblib                    1.4.2              pyhd8ed1ab_1    conda-forge
-libblas                   3.9.0           28_h7f60823_openblas    conda-forge
-libcblas                  3.9.0           28_hff6cab4_openblas    conda-forge
-libcxx                    19.1.7               hf95d169_0    conda-forge
-libexpat                  2.6.4                h240833e_0    conda-forge
-libffi                    3.4.2                h0d85af4_5    conda-forge
-libgfortran               5.0.0           13_2_0_h97931a8_3    conda-forge
-libgfortran5              13.2.0               h2873a65_3    conda-forge
-liblapack                 3.9.0           28_h236ab99_openblas    conda-forge
-liblzma                   5.6.4                hd471939_0    conda-forge
-libopenblas               0.3.28          openmp_hbf64a52_1    conda-forge
-libsqlite                 3.48.0               hdb6dae5_1    conda-forge
-libzlib                   1.3.1                hd23fc13_2    conda-forge
-llvm-openmp               19.1.7               ha54dae1_0    conda-forge
-mccabe                    0.7.0              pyhd8ed1ab_1    conda-forge
-ncurses                   6.5                  h0622a9a_3    conda-forge
-numpy                     2.2.2           py312h6693b03_0    conda-forge
-openssl                   3.4.1                hc426f3f_0    conda-forge
-packaging                 24.2               pyhd8ed1ab_2    conda-forge
-pandas                    2.2.3           py312h98e817e_1    conda-forge
-pip                       25.0               pyh8b19718_0    conda-forge
-platformdirs              4.3.6              pyhd8ed1ab_1    conda-forge
-pluggy                    1.5.0              pyhd8ed1ab_1    conda-forge
-pycparser                 2.22               pyh29332c3_1    conda-forge
-pylint                    3.3.4              pyh29332c3_0    conda-forge
-pysocks                   1.7.1              pyha55dd90_7    conda-forge
-pytest                    8.3.4              pyhd8ed1ab_1    conda-forge
-pytest-asyncio            0.25.3             pyh29332c3_0    conda-forge
-python                    3.12.8          h9ccd52b_1_cpython    conda-forge
-python-dateutil           2.9.0.post0        pyhff2d567_1    conda-forge
-python-dotenv             1.0.1              pyhd8ed1ab_1    conda-forge
-python-tzdata             2025.1             pyhd8ed1ab_0    conda-forge
-python_abi                3.12                    5_cp312    conda-forge
-pytz                      2024.1             pyhd8ed1ab_0    conda-forge
-readline                  8.2                  h9e318b2_1    conda-forge
-requests                  2.32.3             pyhd8ed1ab_1    conda-forge
-scikit-learn              1.6.1           py312he1a5313_0    conda-forge
-scipy                     1.15.1          py312hb4e66ee_0    conda-forge
-setuptools                75.8.0             pyhff2d567_0    conda-forge
-six                       1.17.0             pyhd8ed1ab_0    conda-forge
-sniffio                   1.3.1              pyhd8ed1ab_1    conda-forge
-sqlparse                  0.5.3              pyhd8ed1ab_0    conda-forge
-threadpoolctl             3.5.0              pyhc1e730c_0    conda-forge
-tk                        8.6.13               h1abcd95_1    conda-forge
-tomli                     2.2.1              pyhd8ed1ab_1    conda-forge
-tomlkit                   0.13.2             pyha770c72_1    conda-forge
-types-pyyaml              6.0.12.20241230    pyhd8ed1ab_0    conda-forge
-typing_extensions         4.12.2             pyha770c72_1    conda-forge
-tzdata                    2025a                h78e105d_0    conda-forge
-urllib3                   2.3.0              pyhd8ed1ab_0    conda-forge
-wheel                     0.45.1             pyhd8ed1ab_1    conda-forge
-zstandard                 0.23.0          py312h7122b0e_1    conda-forge
-zstd                      1.5.6                h915ae27_0    conda-forge
+aiohappyeyeballs==2.6.1
+aiohttp==3.11.13
+aiosignal==1.3.2
+amqp==5.3.1
+anyio @ file:///home/conda/feedstock_root/build_artifacts/anyio_1736174388474/work
+asgiref @ file:///home/conda/feedstock_root/build_artifacts/asgiref_1733215607532/work
+astroid @ file:///Users/runner/miniforge3/conda-bld/astroid_1735074199038/work
+attrs==25.3.0
+billiard==4.2.1
+Brotli @ file:///Users/runner/miniforge3/conda-bld/brotli-split_1725267521616/work
+celery==5.4.0
+certifi @ file:///home/conda/feedstock_root/build_artifacts/certifi_1734380492396/work/certifi
+cffi @ file:///Users/runner/miniforge3/conda-bld/cffi_1725560565029/work
+charset-normalizer @ file:///home/conda/feedstock_root/build_artifacts/charset-normalizer_1735929714516/work
+click==8.1.8
+click-didyoumean==0.3.1
+click-plugins==1.1.1
+click-repl==0.3.0
+colorama @ file:///home/conda/feedstock_root/build_artifacts/colorama_1733218098505/work
+coreapi @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_coreapi_1735654748/work
+coreschema @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_coreschema_1735596739/work
+dill @ file:///home/conda/feedstock_root/build_artifacts/dill_1733249551891/work
+dj-database-url==2.3.0
+Django @ file:///home/conda/feedstock_root/build_artifacts/django_1738780034837/work
+django-cors-headers==4.7.0
+django-stubs @ file:///home/conda/feedstock_root/build_artifacts/django-stubs_1736884925191/work
+django-stubs-ext @ file:///home/conda/feedstock_root/build_artifacts/django-stubs-ext_1736878080291/work
+djangorestframework @ file:///home/conda/feedstock_root/build_artifacts/djangorestframework_1733236662144/work
+djangorestframework_simplejwt==5.4.0
+drf-spectacular==0.28.0
+exceptiongroup @ file:///home/conda/feedstock_root/build_artifacts/exceptiongroup_1733208806608/work
+frozenlist==1.5.0
+h11 @ file:///home/conda/feedstock_root/build_artifacts/h11_1733327467879/work
+h2 @ file:///home/conda/feedstock_root/build_artifacts/h2_1738578511449/work
+hpack @ file:///home/conda/feedstock_root/build_artifacts/hpack_1737618293087/work
+httpcore @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_httpcore_1731707562/work
+httpx @ file:///home/conda/feedstock_root/build_artifacts/httpx_1733663348460/work
+hyperframe @ file:///home/conda/feedstock_root/build_artifacts/hyperframe_1737618333194/work
+idna @ file:///home/conda/feedstock_root/build_artifacts/idna_1733211830134/work
+inflection==0.5.1
+iniconfig @ file:///home/conda/feedstock_root/build_artifacts/iniconfig_1733223141826/work
+isort @ file:///home/conda/feedstock_root/build_artifacts/isort_1738061237894/work
+itypes @ file:///home/conda/feedstock_root/build_artifacts/itypes_1591807113790/work
+Jinja2 @ file:///home/conda/feedstock_root/build_artifacts/jinja2_1734823942230/work
+joblib @ file:///home/conda/feedstock_root/build_artifacts/joblib_1733736026804/work
+jsonschema==4.23.0
+jsonschema-specifications==2024.10.1
+kombu==5.4.2
+MarkupSafe @ file:///Users/runner/miniforge3/conda-bld/markupsafe_1733219691421/work
+mccabe @ file:///home/conda/feedstock_root/build_artifacts/mccabe_1733216466933/work
+multidict==6.1.0
+numpy @ file:///Users/runner/miniforge3/conda-bld/numpy_1737331087001/work/dist/numpy-2.2.2-cp312-cp312-macosx_10_13_x86_64.whl#sha256=70b38e39528310cd817dabbc387ffca2ce641bfe0fe8d86e396a51dd03f1d376
+packaging @ file:///home/conda/feedstock_root/build_artifacts/packaging_1733203243479/work
+pandas @ file:///Users/runner/miniforge3/conda-bld/pandas_1726878436460/work
+platformdirs @ file:///home/conda/feedstock_root/build_artifacts/platformdirs_1733232627818/work
+pluggy @ file:///home/conda/feedstock_root/build_artifacts/pluggy_1733222765875/work
+prompt_toolkit==3.0.50
+propcache==0.3.0
+psycopg2-binary==2.9.10
+pycparser @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_pycparser_1733195786/work
+PyJWT==2.10.1
+pylint @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_pylint_1738072071/work
+PySocks @ file:///home/conda/feedstock_root/build_artifacts/pysocks_1733217236728/work
+pytest @ file:///home/conda/feedstock_root/build_artifacts/pytest_1733217473289/work
+pytest-asyncio @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_pytest-asyncio_1738104606/work/dist
+python-dateutil @ file:///home/conda/feedstock_root/build_artifacts/python-dateutil_1733215673016/work
+python-dotenv @ file:///home/conda/feedstock_root/build_artifacts/python-dotenv_1733243180666/work
+pytz @ file:///home/conda/feedstock_root/build_artifacts/pytz_1706886791323/work
+PyYAML==6.0.2
+redis==5.2.1
+referencing==0.36.2
+requests @ file:///home/conda/feedstock_root/build_artifacts/requests_1733217035951/work
+rpds-py==0.23.1
+scikit-learn @ file:///Users/runner/miniforge3/conda-bld/scikit-learn_1736496783963/work/dist/scikit_learn-1.6.1-cp312-cp312-macosx_10_13_x86_64.whl#sha256=0a7b8f8bfd367eb107dbc11a09420ca1a4d8e263d0b5e380a45b190f689a8364
+scipy @ file:///Users/runner/miniforge3/conda-bld/scipy-split_1736617276787/work/dist/scipy-1.15.1-cp312-cp312-macosx_10_13_x86_64.whl#sha256=6266da2cf22a0e9d6e56239a4af131c9761876c475dc7150920d07965e4dd298
+setuptools==75.8.0
+six @ file:///home/conda/feedstock_root/build_artifacts/six_1733380938961/work
+sniffio @ file:///home/conda/feedstock_root/build_artifacts/sniffio_1733244044561/work
+sqlparse @ file:///home/conda/feedstock_root/build_artifacts/sqlparse_1734007102193/work
+threadpoolctl @ file:///home/conda/feedstock_root/build_artifacts/threadpoolctl_1714400101435/work
+tomli @ file:///home/conda/feedstock_root/build_artifacts/tomli_1733256695513/work
+tomlkit @ file:///home/conda/feedstock_root/build_artifacts/tomlkit_1733230743009/work
+types-PyYAML @ file:///home/conda/feedstock_root/build_artifacts/types-pyyaml_1735564787326/work
+typing_extensions @ file:///home/conda/feedstock_root/build_artifacts/typing_extensions_1733188668063/work
+tzdata @ file:///home/conda/feedstock_root/build_artifacts/python-tzdata_1737541069190/work
+uritemplate @ file:///home/conda/feedstock_root/build_artifacts/uritemplate_1733927878495/work
+urllib3 @ file:///home/conda/feedstock_root/build_artifacts/urllib3_1734859416348/work
+vine==5.1.0
+wcwidth==0.2.13
+wheel==0.45.1
+whitenoise==6.9.0
+yarl==1.18.3
+zstandard==0.23.0
