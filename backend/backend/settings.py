@@ -46,6 +46,14 @@ DEBUG = os.getenv('DEBUG', 'True') == 'True'
 # In production, these should be more restrictive
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
+
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")
+CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'")
+CSP_IMG_SRC = ("'self'", "data:")
+CSP_FONT_SRC = ("'self'", "data:")
+
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',

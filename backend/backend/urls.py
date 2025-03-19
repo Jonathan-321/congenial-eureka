@@ -36,8 +36,6 @@ def api_root(request):
     })
 
 urlpatterns = [
-    # Root URL handler - add this at the top
-    path('', api_root, name='api-root'),
     
     # Your existing URLs
     path('admin/', admin.site.urls),
