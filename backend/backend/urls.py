@@ -21,10 +21,38 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView 
-from django.urls import path, include 
+from django.urls import path, include
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from django.shortcuts import redirect
+
+
+# Add this simple view for the root URL
+@api_view(['GET'])
+def api_root(request):
+    """
+    Root endpoint that provides API information and links
+    """
+    return Response({
+        "message": "Welcome to AgriFinance API",
+        "version": "1.0.0",
+        "documentation": "/api/docs/",
+        "endpoints": {
+            "auth": "/api/auth/",
+            "farmers": "/api/farmers/",
+            "loans": "/api/loans/",
+            "token": "/api/token/",
+            "docs": "/api/docs/"
+        },
+        "status": "online"
+    })
 
 
 urlpatterns = [
+    # Root URL handler - add this at the top
+    path('', api_root, name='api-root'),
+    
+    # Your existing URLs
     path('admin/', admin.site.urls),
     path('api/auth/', include('authentication.urls')),
     path('api/farmers/', include('farmers.urls')),
@@ -34,6 +62,4 @@ urlpatterns = [
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
-
-
 ]
