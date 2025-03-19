@@ -10,6 +10,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.shortcuts import redirect
+from django.views.generic import TemplateView
+
 
 @api_view(['GET'])
 @permission_classes([AllowAny]) 
@@ -47,4 +49,6 @@ urlpatterns = [
     path('api/schema/', SpectacularAPIView.as_view(permission_classes=[AllowAny]), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema', permission_classes=[AllowAny]), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema', permission_classes=[AllowAny]), name='redoc'),
+    path('', TemplateView.as_view(template_name='index.html'), name='api-root'),
+
 ]
