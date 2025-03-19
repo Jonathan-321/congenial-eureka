@@ -11,28 +11,27 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.shortcuts import redirect
 
-
-# Add this simple view for the root URL - with AllowAny permission
 @api_view(['GET'])
-@permission_classes([AllowAny])  # This allows unauthenticated access
+@permission_classes([AllowAny]) 
 def api_root(request):
     """
     Root endpoint that provides API information and links
     """
+    base_url = request.build_absolute_uri('/').rstrip('/')
+    
     return Response({
         "message": "Welcome to AgriFinance API",
         "version": "1.0.0",
-        "documentation": "/api/docs/",
+        "documentation": f"{base_url}/api/docs/",
         "endpoints": {
-            "auth": "/api/auth/",
-            "farmers": "/api/farmers/",
-            "loans": "/api/loans/",
-            "token": "/api/token/",
-            "docs": "/api/docs/"
+            "auth": f"{base_url}/api/auth/",
+            "farmers": f"{base_url}/api/farmers/",
+            "loans": f"{base_url}/api/loans/",
+            "token": f"{base_url}/api/token/",
+            "docs": f"{base_url}/api/docs/"
         },
         "status": "online"
     })
-
 
 urlpatterns = [
     # Root URL handler - add this at the top
