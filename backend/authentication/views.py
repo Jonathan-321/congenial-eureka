@@ -5,32 +5,28 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import UserSerializer
 from django.contrib.auth import get_user_model
-from farmers.models import Farmer  # Import Farmer model
+from rest_framework.permissions import AllowAny
 
 User = get_user_model()
 
 class UserRegistrationView(APIView):
-    permission_classes = []
+    permission_classes = [AllowAny]
     
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            user.is_active = True  # Explicitly set user as active
-            user.save()
-
-            # Create Farmer profile if user role is FARMER
-            if user.role == 'FARMER':
-                Farmer.objects.create(
-                    user=user,
-                    name=user.username,
-                    phone_number=user.phone_number,
-                    location='Default Location',
-                    farm_size=1.0
-                )
-
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            # Get token for immediate login
+            token_view = TokenObtainPairView.as_view()
+            token_response = token_view(request._request).data
+            return Response({
+                'user': serializer.data,
+                'tokens': token_response
+            }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class LoginView(TokenObtainPairView):
+    permission_classes = [AllowAny]
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):

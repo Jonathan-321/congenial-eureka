@@ -47,6 +47,22 @@ DEBUG = os.getenv('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 
+# Security Settings
+SECURE_SSL_REDIRECT = not DEBUG
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+
+# If you're using HTTPS in production
+if not DEBUG:
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+
+
 CSP_DEFAULT_SRC = ("'self'",)
 CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")
 CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'")
@@ -110,8 +126,33 @@ ASGI_APPLICATION = 'backend.asgi.application'
 
 # CORS settings - important for frontend integration
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only allow all origins in development
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000').split(',')
-
+# CORS settings
+CORS_ALLOW_ALL_ORIGINS = DEBUG
+CORS_ALLOWED_ORIGINS = [
+    "https://agrifinance-api.onrender.com",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 # REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -126,27 +167,23 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle'
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '20/minute',  # Limit anonymous users
-        'user': '60/minute'   # Limit authenticated users
-    }
+        'anon': '100/day',  # Increased for better usability
+        'user': '1000/day'  # Increased for authenticated users
+    },
+    'DEFAULT_AUTHENTICATION_EXEMPT_URLS': [
+        r'^/api/auth/register/$',
+        r'^/api/auth/login/$',
+        r'^/api/auth/token/$',
+        r'^/api/docs/$',
+        r'^/api/schema/$',
+    ]
 }
 
 # JWT settings
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': False,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'UPDATE_LAST_LOGIN': False,
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': os.getenv('JWT_SECRET_KEY', SECRET_KEY),
-    'VERIFYING_KEY': None,
-    'AUDIENCE': None,
-    'ISSUER': None,
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),  # Increased for demo
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # Increased for demo
     'AUTH_HEADER_TYPES': ('Bearer',),
-    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
-    'USER_ID_FIELD': 'id',
-    'USER_ID_CLAIM': 'user_id',
 }
 
 # API Documentation settings

@@ -49,11 +49,27 @@
         </div>
         
         <div class="card">
-            <h2>API Endpoints</h2>
-            <a class="endpoint" href="/api/auth/">Authentication API</a>
-            <a class="endpoint" href="/api/farmers/">Farmers API</a>
-            <a class="endpoint" href="/api/loans/">Loans API</a>
-            <a class="endpoint" href="/api/token/">Token Authentication</a>
+            <h2>Authentication</h2>
+            <p>To use the API, first register or login:</p>
+            <div class="endpoint-group">
+                <h3>1. Register a new account:</h3>
+                <pre>POST /api/auth/register/
+        {
+            "username": "your_username",
+            "email": "your@email.com",
+            "password": "your_password"
+        }</pre>
+                
+                <h3>2. Login to get your token:</h3>
+                <pre>POST /api/auth/token/
+        {
+            "username": "your_username",
+            "password": "your_password"
+        }</pre>
+                
+                <h3>3. Use the token in your requests:</h3>
+                <pre>Authorization: Bearer your_access_token</pre>
+            </div>
         </div>
         
         <div class="card">
