@@ -36,6 +36,15 @@
             border-radius: 4px;
             font-weight: bold;
         }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .code-example {
+            margin: 15px 0;
+        }
     </style>
 </head>
 <body>
@@ -43,38 +52,44 @@
         <h1>Welcome to AgriFinance API</h1>
         
         <div class="card">
-            <h2>API Documentation</h2>
-            <p>Explore our comprehensive API documentation to learn about available endpoints and functionality.</p>
-            <a class="button" href="/api/docs/">View API Documentation</a>
-        </div>
-        
-        <div class="card">
-            <h2>Authentication</h2>
-            <p>To use the API, first register or login:</p>
-            <div class="endpoint-group">
-                <h3>1. Register a new account:</h3>
-                <pre>POST /api/auth/register/
-        {
-            "username": "your_username",
-            "email": "your@email.com",
-            "password": "your_password"
-        }</pre>
-                
-                <h3>2. Login to get your token:</h3>
-                <pre>POST /api/auth/token/
-        {
-            "username": "your_username",
-            "password": "your_password"
-        }</pre>
-                
-                <h3>3. Use the token in your requests:</h3>
-                <pre>Authorization: Bearer your_access_token</pre>
+            <h2>Quick Start Guide</h2>
+            <p>Use these curl commands to test the API:</p>
+            
+            <div class="code-example">
+                <h3>1. Register a new user:</h3>
+                <pre>
+curl -X POST https://agrifinance-api.onrender.com/api/auth/register/ \
+-H "Content-Type: application/json" \
+-d '{
+    "username": "testuser",
+    "password": "testpass123",
+    "email": "test@example.com"
+}'</pre>
+            </div>
+
+            <div class="code-example">
+                <h3>2. Login to get token:</h3>
+                <pre>
+curl -X POST https://agrifinance-api.onrender.com/api/auth/login/ \
+-H "Content-Type: application/json" \
+-d '{
+    "username": "testuser",
+    "password": "testpass123"
+}'</pre>
+            </div>
+
+            <div class="code-example">
+                <h3>3. Access protected endpoints:</h3>
+                <pre>
+curl -X GET https://agrifinance-api.onrender.com/api/farmers/ \
+-H "Authorization: Bearer your_access_token_here"</pre>
             </div>
         </div>
         
         <div class="card">
-            <h2>API Status: Online</h2>
-            <p>Version: 1.0.0</p>
+            <h2>API Documentation</h2>
+            <p>For full API documentation and interactive testing:</p>
+            <a class="button" href="/api/docs/">View API Documentation</a>
         </div>
     </div>
 </body>
