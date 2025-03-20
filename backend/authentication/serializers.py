@@ -12,7 +12,11 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'is_active')
 
     def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
+        password = validated_data.pop('password', None)
+        user = User.objects.create(**validated_data)
+        if password:
+            user.set_password(password)
+            user.save()
         return user
 
 class UserRegistrationSerializer(serializers.ModelSerializer):

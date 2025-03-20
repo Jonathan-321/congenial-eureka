@@ -82,8 +82,8 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework',
     'rest_framework_simplejwt',
-    'corsheaders',            # Add CORS support
-    'drf_spectacular',        # API documentation
+    'corsheaders',           
+    'drf_spectacular',        
     'django_filters',
     
     # Local apps
@@ -179,10 +179,12 @@ REST_FRAMEWORK = {
     ]
 }
 
-# JWT settings
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),  # Increased for demo
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # Increased for demo
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': False,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 

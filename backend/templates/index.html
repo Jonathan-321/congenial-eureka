@@ -68,14 +68,20 @@ curl -X POST https://agrifinance-api.onrender.com/api/auth/register/ \
             </div>
 
             <div class="code-example">
-                <h3>2. Login to get token:</h3>
+                <h3>2. Login to get tokens:</h3>
                 <pre>
-curl -X POST https://agrifinance-api.onrender.com/api/auth/login/ \
--H "Content-Type: application/json" \
--d '{
-    "username": "testuser",
-    "password": "testpass123"
-}'</pre>
+            curl -X POST https://agrifinance-api.onrender.com/api/auth/login/ \
+            -H "Content-Type: application/json" \
+            -d '{
+                "username": "testuser",
+                "password": "testpass123"
+            }'
+            
+            # Response will contain two tokens. Use the "access" token for API requests:
+            {
+                "refresh": "refresh_token_here...",
+                "access": "access_token_here..."  <!-- Use this one for API requests -->
+            }</pre>
             </div>
 
             <div class="code-example">

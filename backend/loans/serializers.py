@@ -5,7 +5,6 @@ from decimal import Decimal
 
 from farmers.models import Farmer
 from farmers.serializers import SimpleFarmerSerializer
-
 from .models import (
     Loan, LoanProduct, LoanRepayment, Transaction, PaymentSchedule,
     LoanToken, TokenTransaction, ApprovedVendor,

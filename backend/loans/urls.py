@@ -34,6 +34,10 @@ urlpatterns = [
     path('market/prices/<str:crop_type>/', 
          views.MarketPricesAPIView.as_view(), 
          name='market-prices'),
+
+     path('', LoanViewSet.as_view({'get': 'list', 'post': 'create'}), name='loan-list'),
+     # Add this if it's missing
+     path('products/', LoanProductViewSet.as_view({'get': 'list'}), name='loan-product-list'),
     
     # Custom action URLs - make sure they go to the correct viewset method
     path('<int:pk>/apply/', LoanViewSet.as_view({'post': 'apply'}), name='loan-apply'),
