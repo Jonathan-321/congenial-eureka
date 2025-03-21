@@ -18,13 +18,9 @@ from .models import Farmer
 class LoanProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = LoanProduct
-        fields = [
-            'id', 'name', 'description',
-            'min_amount', 'max_amount',
-            'interest_rate', 'duration_days',
-            'is_active', 'requirements'
-        ]
-
+        fields = ['id', 'name', 'description', 'min_amount', 'max_amount', 
+                 'interest_rate', 'duration_days', 'repayment_schedule_type', 
+                 'is_active']
 class SimpleLoanSerializer(serializers.ModelSerializer):
     class Meta:
         model = Loan

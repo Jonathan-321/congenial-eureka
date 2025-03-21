@@ -34,19 +34,48 @@ from .external.market_api import MarketDataService
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from .repayment_service import RepaymentService
+from .permissions import IsAdminUser
+
+
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework.reverse import reverse
+
+@api_view(['GET'])
+def api_root(request, format=None):
+    return Response({
+        'products': reverse('loan-product-list', request=request, format=format),
+        'loans': reverse('loan-list', request=request, format=format),
+        'crop-cycles': reverse('crop-cycles-list', request=request, format=format),
+        'farmer-dashboard': 'Use /farmer/{farmer_id}/dashboard/',
+        'loan-status': 'Use /status/{loan_id}/',
+        'token-validation': reverse('token-validation', request=request, format=format),
+        'harvest-schedule': 'Use /harvest-schedule/{loan_id}/',
+        'weather-forecast': 'Use /weather/forecast/{location}/',
+        'market-prices': 'Use /market/prices/{crop_type}/',
+    })
+
 
 class LoanProductViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing loan products"""
     queryset = LoanProduct.objects.all()
     serializer_class = LoanProductSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_permissions(self):
+        """
+        Create/Update/Delete - Admin only
+        List/Retrieve - Any authenticated user
+        """
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            permission_classes = [IsAuthenticated, IsAdminUser]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes] 
     
     def get_queryset(self):
-        """Return all products for admins, only active for regular users"""
         if self.request.user.role == 'ADMIN':
             return LoanProduct.objects.all()
         return LoanProduct.objects.filter(is_active=True)
-
 
 class LoanViewSet(viewsets.ModelViewSet):
     """ViewSet for managing loan resources"""

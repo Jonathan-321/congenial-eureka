@@ -6,8 +6,18 @@ from rest_framework.views import APIView
 from .serializers import UserRegistrationSerializer
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
+from .serializers import UserSerializer
 
 User = get_user_model()
+
+
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)
 
 class UserRegistrationView(APIView):
     permission_classes = [AllowAny]
