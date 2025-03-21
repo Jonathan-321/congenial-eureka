@@ -52,50 +52,98 @@
         <h1>Welcome to AgriFinance API</h1>
         
         <div class="card">
-            <h2>Quick Start Guide</h2>
-            <p>Use these curl commands to test the API:</p>
-            
-            <div class="code-example">
-                <h3>1. Register a new user:</h3>
-                <pre>
-curl -X POST https://agrifinance-api.onrender.com/api/auth/register/ \
--H "Content-Type: application/json" \
--d '{
-    "username": "testuser",
-    "password": "testpass123",
-    "email": "test@example.com"
-}'</pre>
-            </div>
-
-            <div class="code-example">
-                <h3>2. Login to get tokens:</h3>
-                <pre>
-            curl -X POST https://agrifinance-api.onrender.com/api/auth/login/ \
-            -H "Content-Type: application/json" \
-            -d '{
-                "username": "testuser",
-                "password": "testpass123"
-            }'
-            
-            # Response will contain two tokens. Use the "access" token for API requests:
-            {
-                "refresh": "refresh_token_here...",
-                "access": "access_token_here..."  <!-- Use this one for API requests -->
-            }</pre>
-            </div>
-
-            <div class="code-example">
-                <h3>3. Access protected endpoints:</h3>
-                <pre>
-curl -X GET https://agrifinance-api.onrender.com/api/farmers/ \
--H "Authorization: Bearer your_access_token_here"</pre>
-            </div>
+            <h2>Admin Access</h2>
+            <p>The easiest way to manage this API is through the admin interface:</p>
+            <a class="button" href="/admin/">Access Admin Panel</a>
+            <p>Login with your admin credentials to create and manage all resources.</p>
         </div>
         
         <div class="card">
             <h2>API Documentation</h2>
             <p>For full API documentation and interactive testing:</p>
             <a class="button" href="/api/docs/">View API Documentation</a>
+            <p>The Swagger UI provides a comprehensive interface to explore and test all API endpoints.</p>
+        </div>
+        
+        <div class="card">
+            <h2>API Testing Guide</h2>
+            <p>If you prefer to test the API programmatically, follow these steps:</p>
+            
+            <div class="code-example">
+                <h3>1. Login as admin to get tokens:</h3>
+                <pre>
+curl -X POST https://agrifinance-api.onrender.com/api/auth/login/ \
+-H "Content-Type: application/json" \
+-d '{
+    "username": "your_admin_username",
+    "password": "your_admin_password"
+}'
+
+# Save the access token:
+export TOKEN="your_access_token_here"</pre>
+            </div>
+
+            <div class="code-example">
+                <h3>2. Browse API resources:</h3>
+                <pre>
+# Get API root to discover available endpoints
+curl -X GET https://agrifinance-api.onrender.com/api/loans/ \
+-H "Authorization: Bearer $TOKEN"
+
+# Get loan products
+curl -X GET https://agrifinance-api.onrender.com/api/loans/products/ \
+-H "Authorization: Bearer $TOKEN"
+
+# Get loans
+curl -X GET https://agrifinance-api.onrender.com/api/loans/loans/ \
+-H "Authorization: Bearer $TOKEN"
+
+# Get farmers
+curl -X GET https://agrifinance-api.onrender.com/api/farmers/ \
+-H "Authorization: Bearer $TOKEN"</pre>
+            </div>
+            
+            <div class="code-example">
+                <h3>3. Create resources:</h3>
+                <pre>
+# Create loan product
+curl -X POST https://agrifinance-api.onrender.com/api/loans/products/ \
+-H "Authorization: Bearer $TOKEN" \
+-H "Content-Type: application/json" \
+-d '{
+    "name": "Loan Product Name",
+    "description": "Description",
+    "min_amount": 100,
+    "max_amount": 5000,
+    "interest_rate": 12.5,
+    "duration_days": 180,
+    "repayment_schedule_type": "FIXED",
+    "is_active": true
+}'
+
+# Create farmer
+curl -X POST https://agrifinance-api.onrender.com/api/farmers/ \
+-H "Authorization: Bearer $TOKEN" \
+-H "Content-Type: application/json" \
+-d '{
+    "name": "Farmer Name",
+    "phone_number": "+250789123456",
+    "location": "Location",
+    "farm_size": 2.5
+}'
+
+# Create loan
+curl -X POST https://agrifinance-api.onrender.com/api/loans/loans/ \
+-H "Authorization: Bearer $TOKEN" \
+-H "Content-Type: application/json" \
+-d '{
+    "farmer": 1,
+    "loan_product": 1,
+    "amount_requested": 2000,
+    "amount_approved": 2000,
+    "status": "PENDING"
+}'</pre>
+            </div>
         </div>
     </div>
 </body>
