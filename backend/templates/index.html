@@ -45,6 +45,18 @@
         .code-example {
             margin: 15px 0;
         }
+        .note {
+            background-color: #fffacd;
+            padding: 10px;
+            border-left: 4px solid #ffcc00;
+            margin: 15px 0;
+        }
+        .warning {
+            background-color: #ffebee;
+            padding: 10px;
+            border-left: 4px solid #f44336;
+            margin: 15px 0;
+        }
     </style>
 </head>
 <body>
@@ -52,22 +64,32 @@
         <h1>Welcome to AgriFinance API</h1>
         
         <div class="card">
-            <h2>Admin Access</h2>
-            <p>The easiest way to manage this API is through the admin interface:</p>
+            <h2>Admin Interface - Recommended Approach</h2>
+            <p>The recommended way to manage this API is through the admin interface:</p>
             <a class="button" href="/admin/">Access Admin Panel</a>
-            <p>Login with your admin credentials to create and manage all resources.</p>
+            <p>Login with your admin credentials to create and manage all resources including:</p>
+            <ul>
+                <li>Loan Products</li>
+                <li>Farmers</li>
+                <li>Loans</li>
+                <li>Crop Cycles (Admin interface only)</li>
+                <li>Loan Repayments</li>
+            </ul>
+            <div class="note">
+                <strong>Note:</strong> For this project, the admin interface is the most reliable way to create and manage resources.
+            </div>
         </div>
         
         <div class="card">
             <h2>API Documentation</h2>
-            <p>For full API documentation and interactive testing:</p>
+            <p>For exploring the API structure and available endpoints:</p>
             <a class="button" href="/api/docs/">View API Documentation</a>
-            <p>The Swagger UI provides a comprehensive interface to explore and test all API endpoints.</p>
+            <p>The Swagger UI provides a comprehensive interface to explore all API endpoints.</p>
         </div>
         
         <div class="card">
             <h2>API Testing Guide</h2>
-            <p>If you prefer to test the API programmatically, follow these steps:</p>
+            <p>If you need to test the API programmatically, here are some working examples:</p>
             
             <div class="code-example">
                 <h3>1. Login as admin to get tokens:</h3>
@@ -104,7 +126,7 @@ curl -X GET https://agrifinance-api.onrender.com/api/farmers/ \
             </div>
             
             <div class="code-example">
-                <h3>3. Create resources:</h3>
+                <h3>3. Create resources (working examples):</h3>
                 <pre>
 # Create loan product
 curl -X POST https://agrifinance-api.onrender.com/api/loans/products/ \
@@ -137,12 +159,16 @@ curl -X POST https://agrifinance-api.onrender.com/api/loans/loans/ \
 -H "Authorization: Bearer $TOKEN" \
 -H "Content-Type: application/json" \
 -d '{
-    "farmer": 1,
+    "farmer": 5,
     "loan_product": 1,
     "amount_requested": 2000,
     "amount_approved": 2000,
     "status": "PENDING"
 }'</pre>
+            </div>
+            
+            <div class="warning">
+                <strong>Warning:</strong> The crop cycle API endpoint is currently experiencing issues. Please use the admin interface to create and manage crop cycles.
             </div>
         </div>
     </div>
