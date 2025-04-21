@@ -260,6 +260,13 @@ MARKET_API_KEY = os.getenv('MARKET_API_KEY', '')
 # Weather API settings
 WEATHER_API_KEY = os.getenv('WEATHER_API_KEY', '')
 
+# API Keys for external services
+OPENWEATHER_API_KEY = os.environ.get('OPENWEATHER_API_KEY')
+SENTINEL_INSTANCE_ID = os.environ.get('SENTINEL_INSTANCE_ID')
+SENTINEL_API_KEY = os.environ.get('SENTINEL_API_KEY')
+SENTINEL_OAUTH_CLIENT_ID = os.environ.get('SENTINEL_OAUTH_CLIENT_ID')
+SENTINEL_OAUTH_CLIENT_SECRET = os.environ.get('SENTINEL_OAUTH_CLIENT_SECRET')
+
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {

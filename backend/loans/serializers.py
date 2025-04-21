@@ -157,4 +157,71 @@ class SimpleFarmerSerializer(serializers.ModelSerializer):
         model = Farmer
         fields = ['id', 'name', 'location', 'phone_number']
 
+class FarmerDetailSerializer(serializers.ModelSerializer):
+    """Serializer for detailed farmer information including climate data"""
+    climate_status = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Farmer
+        fields = ['id', 'name', 'phone_number', 'location', 'farm_size', 
+                 'latitude', 'longitude', 'climate_status', 'created_at']
+        
+    def get_climate_status(self, obj):
+        """Get climate-related statistics for the farmer"""
+        status = {
+            'has_climate_data': obj.last_climate_update is not None,
+            'ndvi_value': obj.ndvi_value,
+            'ndvi_status': self._get_ndvi_status(obj.ndvi_value),
+            'rainfall_anomaly_mm': obj.rainfall_anomaly_mm,
+            'rainfall_status': self._get_rainfall_status(obj.rainfall_anomaly_mm),
+            'last_update': obj.last_climate_update
+        }
+        return status
+        
+    def _get_ndvi_status(self, ndvi):
+        """Convert NDVI value to a descriptive status"""
+        if ndvi is None:
+            return "Unknown"
+        elif ndvi < 0:
+            return "Poor vegetation"
+        elif ndvi < 0.2:
+            return "Sparse vegetation"
+        elif ndvi < 0.4:
+            return "Moderate vegetation"
+        elif ndvi < 0.6:
+            return "Good vegetation"
+        else:
+            return "Dense vegetation"
+            
+    def _get_rainfall_status(self, anomaly):
+        """Convert rainfall anomaly to a descriptive status"""
+        if anomaly is None:
+            return "Unknown"
+        elif anomaly < -30:
+            return "Severe drought"
+        elif anomaly < -15:
+            return "Moderate drought"
+        elif anomaly < -5:
+            return "Slight drought"
+        elif anomaly <= 5:
+            return "Normal rainfall"
+        elif anomaly <= 15:
+            return "Above average rainfall"
+        elif anomaly <= 30:
+            return "High rainfall"
+        else:
+            return "Excessive rainfall"
+
+# Update the LoanApplicationSerializer or similar to include our climate data
+class LoanApplicationDetailSerializer(serializers.ModelSerializer):
+    farmer = FarmerDetailSerializer(read_only=True)
+    # ... existing fields ...
+    
+    class Meta:
+        model = Loan
+        fields = [
+            'id', 'farmer', 'amount', 'purpose', 'status', 'application_date',
+            # ... other existing fields ...
+        ]
+
 
